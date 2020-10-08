@@ -1,0 +1,51 @@
+name: Build
+
+on: push
+
+env:
+  BUILD_TYPE: Release
+
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up build environment
+        run: cmake -E make_directory ${{runner.workspace}}/build
+
+      - name: Generate build system
+        working-directory: ${{runner.workspace}}/build
+        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+                   -DBUILD_SHARED_LIBS=ON -DSQLITE_BUILD_SHELL=ON -DSTRICT_WARNINGS=ON
+
+      - name: Build targets
+        working-directory: ${{runner.workspace}}/build
+        run: cmake --build .
+
+      - name: Perform tests
+        working-directory: ${{runner.workspace}}/build
+        run: ctest -C $BUILD_TYPE -V
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v2
+
+      - name: Set up build environment
+        run: cmake -E make_directory ${{runner.workspace}}\build
+
+      - name: Generate build system
+        working-directory: ${{runner.workspace}}\build
+        run: cmake ${env:GITHUB_WORKSPACE}
+                   -DBUILD_SHARED_LIBS=ON -DSQLITE_BUILD_SHELL=ON -DSTRICT_WARNINGS=ON
+
+      - name: Build targets
+        working-directory: ${{runner.workspace}}\build
+        run: cmake --build . --config ${env:BUILD_TYPE}
+
+      - name: Perform tests
+        working-directory: ${{runner.workspace}}\build
+        run: ctest -C ${env:BUILD_TYPE} -V
